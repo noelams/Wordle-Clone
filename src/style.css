@@ -2,6 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
 :root{
@@ -66,15 +67,35 @@
     flex-direction: row;
     gap: 0.3rem;
 }
-.last{
-    margin-bottom: 20px;
+.top{
+    margin-top: 20px;
 }
 
 .grid-cell{
+    display: flex;
     width: 55px;
     height: 55px;
     border: 2px solid var(--letter-background-color);
     border-radius: 2px;
+    font-size: 32px;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+}
+
+.incorrect{
+    color: white;
+    background-color: #787C7E;
+}
+
+.correct{
+    color: white;
+    background-color: #6AAA64;
+}
+
+.wrong-position{
+    color: white;
+    background-color: #C9B458;
 }
 
 [data-theme="dark"]{

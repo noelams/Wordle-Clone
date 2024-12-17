@@ -1,50 +1,20 @@
 import React from "react";
 
-export default function WordleGrid() {
+export default function WordleGrid({ grid, feedback }) {
   return (
     <div className="grid-container">
-      <div className="grid-row">
-        <div className="grid-cell 1"></div>
-        <div className="grid-cell 2"></div>
-        <div className="grid-cell 3"></div>
-        <div className="grid-cell 4"></div>
-        <div className="grid-cell 5"></div>
-      </div>
-      <div className="grid-row">
-        <div className="grid-cell 1"></div>
-        <div className="grid-cell 2"></div>
-        <div className="grid-cell 3"></div>
-        <div className="grid-cell 4"></div>
-        <div className="grid-cell 5"></div>
-      </div>
-      <div className="grid-row">
-        <div className="grid-cell 1"></div>
-        <div className="grid-cell 2"></div>
-        <div className="grid-cell 3"></div>
-        <div className="grid-cell 4"></div>
-        <div className="grid-cell 5"></div>
-      </div>
-      <div className="grid-row">
-        <div className="grid-cell 1"></div>
-        <div className="grid-cell 2"></div>
-        <div className="grid-cell 3"></div>
-        <div className="grid-cell 4"></div>
-        <div className="grid-cell 5"></div>
-      </div>
-      <div className="grid-row">
-        <div className="grid-cell 1"></div>
-        <div className="grid-cell 2"></div>
-        <div className="grid-cell 3"></div>
-        <div className="grid-cell 4"></div>
-        <div className="grid-cell 5"></div>
-      </div>
-      <div className="grid-row last">
-        <div className="grid-cell 1"></div>
-        <div className="grid-cell 2"></div>
-        <div className="grid-cell 3"></div>
-        <div className="grid-cell 4"></div>
-        <div className="grid-cell 5"></div>
-      </div>
+      {grid.map((row, rowIndex) => (
+        <div key={`row-${rowIndex}`} className="grid-row">
+          {row.map((letter, colIndex) => (
+            <div
+              key={`cell-${rowIndex}-${colIndex}`}
+              className={`grid-cell ${feedback[rowIndex][colIndex]}`}
+            >
+              {letter}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
