@@ -6,6 +6,7 @@ export default function Keyboard({
   onLetterClick,
   onEnterClick,
   onBackspaceClick,
+  keyColors,
 }) {
   const rows = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
@@ -14,45 +15,25 @@ export default function Keyboard({
   ];
   return (
     <div className="keyboard-container">
-      <div className="keyboard-row">
-        {"QWERTYUIOP".split("").map((letter) => (
-          <button
-            key={letter}
-            className="letter top"
-            onClick={() => onLetterClick(letter)}
-          >
-            {letter}
-          </button>
-        ))}
-      </div>
-
-      <div className="keyboard-row">
-        {"ASDFGHJKL".split("").map((letter) => (
-          <button
-            key={letter}
-            className="letter"
-            onClick={() => onLetterClick(letter)}
-          >
-            {letter}
-          </button>
-        ))}
-      </div>
-
+      {rows.map((row, rowIndex) => (
+        <div key={rowIndex} className="keyboard-row">
+          {row.map((letter) => (
+            <button
+              key={letter}
+              className={`letter ${keyColors[letter] || ""}`}
+              onClick={() => onLetterClick(letter)}
+            >
+              {letter}
+            </button>
+          ))}
+        </div>
+      ))}
       <div className="keyboard-row">
         <button className="letter" onClick={onEnterClick}>
-          ENTER
+          Enter
         </button>
-        {"ZXCVBNM".split("").map((letter) => (
-          <button
-            key={letter}
-            className="letter"
-            onClick={() => onLetterClick(letter)}
-          >
-            {letter}
-          </button>
-        ))}
         <button className="letter" onClick={onBackspaceClick}>
-          <FontAwesomeIcon icon={faDeleteLeft} />
+          Backspace
         </button>
       </div>
     </div>

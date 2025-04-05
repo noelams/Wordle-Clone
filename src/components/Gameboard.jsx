@@ -25,9 +25,9 @@ export default function Gameboard() {
         `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
       );
 
-      return response.ok; // Return true if the response is OK, false otherwise
+      return response.ok;
     } catch (error) {
-      return false; // Handle any errors gracefully
+      return false;
     }
   };
 
@@ -54,8 +54,10 @@ export default function Gameboard() {
       if (key >= "A" && key <= "Z") {
         handleLetterInput(key);
       } else if (key === "ENTER") {
+        e.preventDefault();
         handleEnter();
       } else if (key === "BACKSPACE") {
+        e.preventDefault();
         handleBackspace();
       }
     };
@@ -81,18 +83,20 @@ export default function Gameboard() {
           currentWord,
           targetWord
         );
+        const feedbackRow = generateFeedback(currentWord, targetWord);
+        newFeedback[currentPosition.row] = feedbackRow;
         setFeedback(newFeedback);
 
-        // updateKeyColors(currentWord, feedbackRow);
+        updateKeyColors(currentWord, feedbackRow);
 
         setCurrentPosition({ row: currentPosition.row + 1, col: 0 });
 
         if (currentPosition.row === 5) {
-          alert("Game over! You ran out of tries!");
+          alert(`Game over! You ran out of tries! The word was ${targetWord}.`);
           console.log("target word is ", targetWord);
         }
       } else {
-        alert("Please enter a valid word!");
+        alert(`${targetWord} is not a valid word`);
       }
     }
   };
@@ -142,25 +146,25 @@ export default function Gameboard() {
     return feedbackRow;
   };
 
-  // const updateKeyColors = (word, feedbackRow) => {
-  //   const newKeyColors = { ...keyColors };
+  const updateKeyColors = (word, feedbackRow) => {
+    const newKeyColors = { ...keyColors };
 
-  //   word.split("").forEach((letter, index) => {
-  //     const color = feedbackRow[index];
+    word.split("").forEach((letter, index) => {
+      const color = feedbackRow[index];
 
-  //     // Update the key color only if the new color is "green" or the current color is not "green"
-  //     if (
-  //       color === "green" ||
-  //       (color === "yellow" && newKeyColors[letter] !== "green")
-  //     ) {
-  //       newKeyColors[letter] = color;
-  //     } else if (!newKeyColors[letter]) {
-  //       newKeyColors[letter] = "gray";
-  //     }
-  //   });
+      // Update the key color only if the new color is "green" or the current color is not "green"
+      if (
+        color === "correct" ||
+        (color === "wrong-position" && newKeyColors[letter] !== "correct")
+      ) {
+        newKeyColors[letter] = color;
+      } else if (!newKeyColors[letter]) {
+        newKeyColors[letter] = "incorrect";
+      }
+    });
 
-  //   setKeyColors(newKeyColors);
-  // };
+    setKeyColors(newKeyColors);
+  };
 
   return (
     <div className="gameboard" data-theme={isDark ? "dark" : "light"}>
@@ -170,7 +174,7 @@ export default function Gameboard() {
         onLetterClick={handleLetterInput}
         onEnterClick={handleEnter}
         onBackspaceClick={handleBackspace}
-        // keyColors={keyColors}
+        keyColors={keyColors}
       />
     </div>
   );
