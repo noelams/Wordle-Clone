@@ -1,6 +1,4 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDeleteLeft } from "@fortawesome/free-solid-svg-icons";
 
 export default function Keyboard({
   onLetterClick,
@@ -21,7 +19,11 @@ export default function Keyboard({
             <button
               key={letter}
               className={`letter ${keyColors[letter] || ""}`}
-              onClick={() => onLetterClick(letter)}
+              onClick={(e) => {
+                onLetterClick(letter);
+                e.preventDefault();
+                e.currentTarget.blur(); //stops the button from focusing when clicked with the mouse
+              }}
             >
               {letter}
             </button>
@@ -29,10 +31,25 @@ export default function Keyboard({
         </div>
       ))}
       <div className="keyboard-row">
-        <button className="letter" onClick={onEnterClick}>
+        <button
+          className="letter"
+          onClick={(e) => {
+            onEnterClick();
+            document.activeElement.blur();
+            e.preventDefault();
+            e.currentTarget.blur();
+          }}
+        >
           Enter
         </button>
-        <button className="letter" onClick={onBackspaceClick}>
+        <button
+          className="letter"
+          onClick={(e) => {
+            onBackspaceClick();
+            e.preventDefault();
+            e.currentTarget.blur();
+          }}
+        >
           Backspace
         </button>
       </div>

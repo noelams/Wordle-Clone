@@ -3,6 +3,8 @@ import "../style.css";
 import Keyboard from "./Keyboard";
 import WordleGrid from "./WordleGrid";
 import { Toggle } from "./Toggle";
+import Toast from "./Toast";
+import { OrbitProgress } from "react-loading-indicators";
 
 export default function Gameboard() {
   const initialGrid = Array(6)
@@ -18,6 +20,19 @@ export default function Gameboard() {
   const [currentPosition, setCurrentPosition] = useState({ row: 0, col: 0 });
   const [targetWord, setTargetWord] = useState("");
   const [isDark, setIsDark] = useState(false);
+  const [Toasts, setToasts] = useState();
+  const [checkingWord, setcheckingWord] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+
+  const addToast = (message, type) => {
+    const id = Date.now();
+    const newToast = { id, message, type };
+    setToasts(newToast);
+  };
+
+  const removeToast = () => {
+    setToasts();
+  };
 
   const isValidWord = async (word) => {
     try {
@@ -27,7 +42,7 @@ export default function Gameboard() {
 
       return response.ok;
     } catch (error) {
-      return false;
+      console.error(error);
     }
   };
 
@@ -38,27 +53,32 @@ export default function Gameboard() {
   const fetchRandomWord = async () => {
     try {
       const response = await fetch(
-        "https://random-word-api.herokuapp.com/word?length=5"
+        "https://random-word-api.vercel.app/api?words=1&length=5"
       );
       const data = await response.json();
+      console.log(data);
       const finalData = data.toString();
       setTargetWord(finalData.toUpperCase());
     } catch (error) {
-      console.error(error);
+      console.error("error: ", error);
     }
   };
 
   useEffect(() => {
     const handleKeydown = (e) => {
-      const key = e.key.toUpperCase();
-      if (key >= "A" && key <= "Z") {
-        handleLetterInput(key);
-      } else if (key === "ENTER") {
+      const key = e.key;
+      if (/^[a-zA-Z]$/.test(key)) {
+        handleLetterInput(key.toUpperCase());
+      } else if (key === "Enter") {
         e.preventDefault();
         handleEnter();
-      } else if (key === "BACKSPACE") {
+        return 0;
+      } else if (key === "Backspace") {
         e.preventDefault();
         handleBackspace();
+        return 0;
+      } else {
+        return 0;
       }
     };
 
@@ -69,13 +89,16 @@ export default function Gameboard() {
   }, [currentPosition, grid]);
 
   const handleEnter = async () => {
+    setcheckingWord(true);
     if (currentPosition.col === 5) {
       const currentWord = grid[currentPosition.row].join("");
       console.log(currentWord);
 
       if (await isValidWord(currentWord)) {
         if (currentWord === targetWord) {
-          alert("Congratulations! You guessed the word correctly!");
+          addToast("Congratulations! You guessed the word correctly!", "right");
+          setcheckingWord(true);
+          setGameOver(true);
         }
 
         const newFeedback = [...feedback];
@@ -91,14 +114,23 @@ export default function Gameboard() {
 
         setCurrentPosition({ row: currentPosition.row + 1, col: 0 });
 
-        if (currentPosition.row === 5) {
-          alert(`Game over! You ran out of tries! The word was ${targetWord}.`);
-          console.log("target word is ", targetWord);
+        if (currentPosition.row === 5 && currentWord !== targetWord) {
+          addToast(
+            `Game over! You ran out of tries! The word was ${targetWord}.`,
+            "game-over"
+          );
+          setcheckingWord(false);
+          setGameOver(true);
         }
       } else {
-        alert(`${targetWord} is not a valid word`);
+        addToast(`${currentWord} is not a valid word`, "invalid");
+        setcheckingWord(false);
       }
+    } else if (!(gameOver && currentPosition.col === 5)) {
+      addToast("Not enough letters", "invalid");
+      setcheckingWord(false);
     }
+    setcheckingWord(false);
   };
 
   const handleBackspace = () => {
@@ -111,6 +143,9 @@ export default function Gameboard() {
   };
 
   const handleLetterInput = (letter) => {
+    if (letter === "BACKSPACE" || letter === "ENTER") {
+      return 0;
+    }
     if (currentPosition.col < 5) {
       const newGrid = [...grid];
       newGrid[currentPosition.row][currentPosition.col] = letter;
@@ -166,8 +201,41 @@ export default function Gameboard() {
     setKeyColors(newKeyColors);
   };
 
+  const handleGameRestart = () => {
+    setGrid(initialGrid);
+    setFeedback(initialFeedback);
+    setCurrentPosition({ row: 0, col: 0 });
+    setTargetWord("");
+    fetchRandomWord();
+    setGameOver(false);
+    setKeyColors({});
+  };
+
   return (
     <div className="gameboard" data-theme={isDark ? "dark" : "light"}>
+      {gameOver ? (
+        <div id="gameOver-modal" className="modal" style={{ display: "block" }}>
+          <div className="modal-content">
+            <p>The word is {targetWord}</p>
+            <button className="playAgain-btn" onClick={handleGameRestart}>
+              Play Again
+            </button>
+          </div>
+        </div>
+      ) : null}
+      <div className="toast-container">
+        {Toasts ? (
+          <Toast
+            key={Toasts.id}
+            message={Toasts.message}
+            type={Toasts.type}
+            onClose={removeToast}
+          />
+        ) : null}
+      </div>
+      {/* <div style={{ marginTop: 1, minHeight: 80 }}>
+        {checkingWord ? <OrbitProgress color="#32cd32" size="small" /> : null}
+      </div> */}
       <Toggle isChecked={isDark} handleChange={() => setIsDark(!isDark)} />
       <WordleGrid grid={grid} feedback={feedback} />
       <Keyboard
