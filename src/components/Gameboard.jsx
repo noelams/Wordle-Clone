@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "../style.css";
 import Keyboard from "./Keyboard";
 import WordleGrid from "./WordleGrid";
 import { Toggle } from "./Toggle";
 import Toast from "./Toast";
 import { OrbitProgress } from "react-loading-indicators";
+import { BarChart } from "@mui/x-charts";
 
 export default function Gameboard() {
   const initialGrid = Array(6)
@@ -16,6 +17,11 @@ export default function Gameboard() {
 
   const [grid, setGrid] = useState(initialGrid);
   const [feedback, setFeedback] = useState(initialFeedback);
+  const [stats, setStats] = useState({
+    gamesPlayed: 0,
+    gamesWon: 0,
+    winDistribution: [0, 0, 0, 0, 0, 0],
+  });
   const [keyColors, setKeyColors] = useState({});
   const [currentPosition, setCurrentPosition] = useState({ row: 0, col: 0 });
   const [targetWord, setTargetWord] = useState("");
@@ -23,6 +29,13 @@ export default function Gameboard() {
   const [Toasts, setToasts] = useState();
   const [checkingWord, setcheckingWord] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [IsGameLoaded, setIsGameLoaded] = useState(false);
+
+  const checkingWordRef = useRef(false);
+
+  useEffect(() => {
+    checkingWordRef.current = checkingWord;
+  }, [checkingWord]);
 
   const addToast = (message, type) => {
     const id = Date.now();
@@ -48,6 +61,55 @@ export default function Gameboard() {
 
   useEffect(() => {
     fetchRandomWord();
+    setIsGameLoaded(true);
+    const savedStats = JSON.parse(localStorage.getItem("wordleStats"));
+    if (savedStats) {
+      setStats(savedStats);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!IsGameLoaded) return; // don't save on first render
+    const gameState = {
+      grid,
+      feedback,
+      currentPosition,
+      targetWord,
+      gameOver,
+      keyColors,
+    };
+    localStorage.setItem("WordleGameState", JSON.stringify(gameState));
+  }, [
+    grid,
+    feedback,
+    currentPosition,
+    targetWord,
+    gameOver,
+    keyColors,
+    IsGameLoaded,
+  ]);
+
+  useEffect(() => {
+    const savedState = localStorage.getItem("WordleGameState");
+    if (savedState) {
+      const {
+        grid,
+        feedback,
+        currentPosition,
+        targetWord,
+        gameOver,
+        keyColors,
+      } = JSON.parse(savedState);
+      setGrid(grid);
+      setFeedback(feedback);
+      setCurrentPosition(currentPosition);
+      setTargetWord(targetWord);
+      setGameOver(gameOver);
+      setKeyColors(keyColors);
+    } else {
+      fetchRandomWord();
+    }
+    setIsGameLoaded(true);
   }, []);
 
   const fetchRandomWord = async () => {
@@ -64,21 +126,40 @@ export default function Gameboard() {
     }
   };
 
+  const updateStats = (guessIndex, didWin) => {
+    const updatedStats = JSON.parse(localStorage.getItem("wordleStats")) || {
+      gamesPlayed: 0,
+      gamesWon: 0,
+      winDistribution: [0, 0, 0, 0, 0, 0],
+    };
+
+    updatedStats.gamesPlayed += 1;
+    if (didWin) {
+      updatedStats.gamesWon += 1;
+      updatedStats.winDistribution[guessIndex] += 1;
+    }
+
+    localStorage.setItem("wordleStats", JSON.stringify(updatedStats));
+    setStats(updatedStats); // <-- important
+  };
+
   useEffect(() => {
     const handleKeydown = (e) => {
-      const key = e.key;
-      if (/^[a-zA-Z]$/.test(key)) {
-        handleLetterInput(key.toUpperCase());
-      } else if (key === "Enter") {
-        e.preventDefault();
-        handleEnter();
-        return 0;
-      } else if (key === "Backspace") {
-        e.preventDefault();
-        handleBackspace();
-        return 0;
-      } else {
-        return 0;
+      if (!checkingWordRef.current || gameOver) {
+        const key = e.key;
+        if (/^[a-zA-Z]$/.test(key)) {
+          handleLetterInput(key.toUpperCase());
+        } else if (key === "Enter") {
+          e.preventDefault();
+          handleEnter();
+          return 0;
+        } else if (key === "Backspace") {
+          e.preventDefault();
+          handleBackspace();
+          return 0;
+        } else {
+          return 0;
+        }
       }
     };
 
@@ -90,47 +171,50 @@ export default function Gameboard() {
 
   const handleEnter = async () => {
     setcheckingWord(true);
-    if (currentPosition.col === 5) {
-      const currentWord = grid[currentPosition.row].join("");
-      console.log(currentWord);
+    setTimeout(async () => {
+      if (currentPosition.col === 5) {
+        const currentWord = grid[currentPosition.row].join("");
+        console.log(currentWord);
 
-      if (await isValidWord(currentWord)) {
-        if (currentWord === targetWord) {
-          addToast("Congratulations! You guessed the word correctly!", "right");
-          setcheckingWord(true);
-          setGameOver(true);
-        }
+        if (await isValidWord(currentWord)) {
+          if (currentWord === targetWord) {
+            updateStats(currentPosition.row, true); // since the guess index is the index of the current row, we can directly save currentPosition.row as guessIndex
+            addToast(
+              "Congratulations! You guessed the word correctly!",
+              "success"
+            );
+            setcheckingWord(true);
+            setGameOver(true);
+          }
 
-        const newFeedback = [...feedback];
-        newFeedback[currentPosition.row] = generateFeedback(
-          currentWord,
-          targetWord
-        );
-        const feedbackRow = generateFeedback(currentWord, targetWord);
-        newFeedback[currentPosition.row] = feedbackRow;
-        setFeedback(newFeedback);
+          const newFeedback = [...feedback];
+          const feedbackRow = generateFeedback(currentWord, targetWord);
+          newFeedback[currentPosition.row] = feedbackRow;
+          setFeedback(newFeedback);
 
-        updateKeyColors(currentWord, feedbackRow);
+          updateKeyColors(currentWord, feedbackRow);
 
-        setCurrentPosition({ row: currentPosition.row + 1, col: 0 });
+          setCurrentPosition({ row: currentPosition.row + 1, col: 0 });
 
-        if (currentPosition.row === 5 && currentWord !== targetWord) {
-          addToast(
-            `Game over! You ran out of tries! The word was ${targetWord}.`,
-            "game-over"
-          );
+          if (currentPosition.row === 5 && currentWord !== targetWord) {
+            updateStats(currentPosition.row, false);
+            addToast(
+              `Game over! You ran out of tries! The word was ${targetWord}.`,
+              "game-over"
+            );
+            setcheckingWord(false);
+            setGameOver(true);
+          }
+        } else {
+          addToast(`${currentWord} is not a valid word`, "invalid");
           setcheckingWord(false);
-          setGameOver(true);
         }
-      } else {
-        addToast(`${currentWord} is not a valid word`, "invalid");
+      } else if (!(gameOver && currentPosition.col === 5)) {
+        addToast("Not enough letters", "invalid");
         setcheckingWord(false);
       }
-    } else if (!(gameOver && currentPosition.col === 5)) {
-      addToast("Not enough letters", "invalid");
       setcheckingWord(false);
-    }
-    setcheckingWord(false);
+    }, 500);
   };
 
   const handleBackspace = () => {
@@ -216,7 +300,44 @@ export default function Gameboard() {
       {gameOver ? (
         <div id="gameOver-modal" className="modal" style={{ display: "block" }}>
           <div className="modal-content">
-            <p>The word is {targetWord}</p>
+            <p>
+              The word is <span className="target-word">{targetWord}</span>
+            </p>
+            <div className="stats-container">
+              <p>Statistics</p>
+              <div className="stats-content">
+                <div>
+                  <span className="stats-figures">{stats.gamesPlayed}</span>
+                  <p> Played</p>
+                </div>
+
+                <div>
+                  <span className="stats-figures">
+                    {Math.floor((stats.gamesWon / stats.gamesPlayed) * 100)}
+                  </span>
+                  <p> Win %</p>
+                </div>
+              </div>
+              <p>Guess Distribution</p>
+              <BarChart
+                xAxis={[
+                  {
+                    id: "guessIndexes",
+                    data: ["1", "2", "3", "4", "5", "6"],
+                    color: "#ffffff",
+                  },
+                ]}
+                series={[
+                  {
+                    data: stats.winDistribution,
+                    color: "#538D4E",
+                  },
+                ]}
+                height={150}
+                layout="horizontal"
+              />
+            </div>
+
             <button className="playAgain-btn" onClick={handleGameRestart}>
               Play Again
             </button>
@@ -233,9 +354,9 @@ export default function Gameboard() {
           />
         ) : null}
       </div>
-      {/* <div style={{ marginTop: 1, minHeight: 80 }}>
+      <div style={{ marginTop: 1, minHeight: 80 }}>
         {checkingWord ? <OrbitProgress color="#32cd32" size="small" /> : null}
-      </div> */}
+      </div>
       <Toggle isChecked={isDark} handleChange={() => setIsDark(!isDark)} />
       <WordleGrid grid={grid} feedback={feedback} />
       <Keyboard
@@ -243,6 +364,7 @@ export default function Gameboard() {
         onEnterClick={handleEnter}
         onBackspaceClick={handleBackspace}
         keyColors={keyColors}
+        disabled={checkingWord || gameOver}
       />
     </div>
   );

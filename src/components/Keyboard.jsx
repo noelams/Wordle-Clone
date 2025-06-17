@@ -5,6 +5,7 @@ export default function Keyboard({
   onEnterClick,
   onBackspaceClick,
   keyColors,
+  disabled,
 }) {
   const rows = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
@@ -18,6 +19,7 @@ export default function Keyboard({
           {row.map((letter) => (
             <button
               key={letter}
+              disabled={disabled}
               className={`letter ${keyColors[letter] || ""}`}
               onClick={(e) => {
                 onLetterClick(letter);
@@ -33,6 +35,7 @@ export default function Keyboard({
       <div className="keyboard-row">
         <button
           className="letter"
+          disabled={disabled}
           onClick={(e) => {
             onEnterClick();
             document.activeElement.blur();
@@ -44,6 +47,7 @@ export default function Keyboard({
         </button>
         <button
           className="letter"
+          disabled={disabled}
           onClick={(e) => {
             onBackspaceClick();
             e.preventDefault();
