@@ -60,7 +60,9 @@ export default function Gameboard() {
   };
 
   useEffect(() => {
-    fetchRandomWord();
+    if (!gameOver) {
+      fetchRandomWord();
+    }
     setIsGameLoaded(true);
     const savedStats = JSON.parse(localStorage.getItem("wordleStats"));
     if (savedStats) {
@@ -303,28 +305,28 @@ export default function Gameboard() {
 
   return (
     <div className="gameboard" data-theme={isDark ? "dark" : "light"}>
-      {!gameOver ? (
+      {gameOver ? (
         <div id="gameOver-modal" className="modal" style={{ display: "block" }}>
           <div className="modal-content">
-            <p>
+            <p style={{ color: "#f6f6f6" }}>
               The word is <span className="target-word">{targetWord}</span>
             </p>
             <div className="stats-container">
-              <p>Statistics</p>
+              <p style={{ color: "#f6f6f6" }}>Statistics</p>
               <div className="stats-content">
                 <div>
                   <span className="stats-figures">{stats.gamesPlayed}</span>
-                  <p> Played</p>
+                  <p style={{ color: "#f6f6f6" }}> Played</p>
                 </div>
 
                 <div>
                   <span className="stats-figures">
                     {Math.floor((stats.gamesWon / stats.gamesPlayed) * 100)}
                   </span>
-                  <p> Win %</p>
+                  <p style={{ color: "#f6f6f6" }}> Win %</p>
                 </div>
               </div>
-              <p>Guess Distribution</p>
+              <p style={{ color: "#f6f6f6" }}>Guess Distribution</p>
               <BarChart
                 xAxis={[
                   {
