@@ -18,6 +18,7 @@
     --toggle-fg: rgb(0, 0, 105);
     --wrong-position-letter-color:#bca954;
     --invalid-toast:
+    --modal-content-text:#f6f6f6;
 
     --size-xxs: 0.5rem;
     --size-xs: 0.75rem;
@@ -43,6 +44,7 @@
     --letter-background-color: #9c9d9f; 
     --incorrect-letter-color: #3A3A3C;
     --wrong-position-letter-color:#bca954;
+    --modal-content-text:#f6f6f6;
 }
 
 
@@ -79,7 +81,7 @@
 .keyboard-container{
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items:center;
     gap: 0.5rem;
 }
 
@@ -214,7 +216,7 @@
 
 .modal-content p{
     font-weight: 700;
-    color: var(--background-color);
+    color: var(--modal-content-text);
     font-size: 12px;
 }
 

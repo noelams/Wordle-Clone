@@ -303,7 +303,7 @@ export default function Gameboard() {
 
   return (
     <div className="gameboard" data-theme={isDark ? "dark" : "light"}>
-      {gameOver ? (
+      {!gameOver ? (
         <div id="gameOver-modal" className="modal" style={{ display: "block" }}>
           <div className="modal-content">
             <p>
