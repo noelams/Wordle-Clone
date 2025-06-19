@@ -114,13 +114,19 @@ export default function Gameboard() {
 
   const fetchRandomWord = async () => {
     try {
-      const response = await fetch(
-        "https://random-word-api.vercel.app/api?words=1&length=5"
-      );
-      const data = await response.json();
-      console.log(data);
-      const finalData = data.toString();
-      setTargetWord(finalData.toUpperCase());
+      let finalData = "";
+      let isValid = false;
+
+      while (!isValid) {
+        const response = await fetch(
+          "https://random-word-api.vercel.app/api?words=1&length=5"
+        );
+        const data = await response.json();
+        finalData = data.toString().toUpperCase();
+        isValid = await isValidWord(finalData);
+      }
+
+      setTargetWord(finalData);
     } catch (error) {
       console.error("error: ", error);
     }
@@ -355,7 +361,18 @@ export default function Gameboard() {
         ) : null}
       </div>
       <div style={{ marginTop: 1, minHeight: 80 }}>
-        {checkingWord ? <OrbitProgress color="#32cd32" size="small" /> : null}
+        {checkingWord ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexDirection: "column",
+            }}
+          >
+            <OrbitProgress color="#32cd32" size="small" />
+            <p>Checking Word</p>
+          </div>
+        ) : null}
       </div>
       <Toggle isChecked={isDark} handleChange={() => setIsDark(!isDark)} />
       <WordleGrid grid={grid} feedback={feedback} />
